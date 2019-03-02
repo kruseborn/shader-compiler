@@ -1,13 +1,9 @@
 # Vulkan Shader Compiler
-## glsl-compiler
-
-Support for writing Vertex and Fragment shader in the same glsl file.
-
 #### Prerequisite
-* Enviroment variable VULKAN_SDK has to be set
-* clang >= 7
-* cmake >= 3.13
-* Ninja >= 1.9
+* Enviroment variable *VULKAN_SDK* has to be set
+* *clang* >= 7
+* *cmake* >= 3.13
+* *Ninja* >= 1.9
 
 #### Build
 ```bash
@@ -16,6 +12,9 @@ cd build
 cmake -G "Ninja" ..
 cmake --build .
 ```
+## glsl-compiler
+
+Support for writing Vertex and Fragment shader in the same glsl file.
 ### Example
 
 ##### common.glsl
@@ -80,7 +79,7 @@ bin/glsl-compiler shader
 ```
 
 ## spirv-reflection
-Spirv-reflection will parse a directory with spirv files and output shaderPipelineInput.h
+Spirv-reflection will parse a directory with spirv files and output *shaderPipelineInput.h*
 
 #### Run
 ```bash

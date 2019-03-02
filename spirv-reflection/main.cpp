@@ -12,7 +12,7 @@ struct ShaderFile {
 
 int main(int argc, char *argv[]) {
   if(argc != 2) {
-    printf("spirv-reflection directory-path");
+    printf("spirv-reflection directory-path\n");
     return 1;
   }
   const std::string pathToSpirv = argv[1];
@@ -30,8 +30,8 @@ int main(int argc, char *argv[]) {
     else
       assert(false);
 
-    auto pathWithoutExtension = path.substr(0, path.find(delimiter));
-    auto name = pathWithoutExtension.substr(pathWithoutExtension.find_last_of("/") + 1);
+    const auto pathWithoutExtension = path.substr(0, path.find(delimiter));
+    const auto name = pathWithoutExtension.substr(pathWithoutExtension.find_last_of("/") + 1);
     spirvShaders.insert({ name, pathWithoutExtension });
   }
 

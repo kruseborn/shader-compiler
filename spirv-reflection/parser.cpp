@@ -253,5 +253,3 @@ Shader parseShader(const std::string &name, const std::string &path) {
 
   return vertexShader;
 }
-
-

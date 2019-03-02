@@ -1,4 +1,3 @@
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -6,22 +5,20 @@
 #include <cstdio>
 #include <cassert>
 #include <algorithm>
-#include <array>
-#include <cctype>
-#include <cstdlib>
 #include <filesystem>
 
 void printShader(const std::string &shader) {
-  int lineNr = 1;
+  uint32_t lineNr = 1;
   std::string line;
   std::stringstream myfile(shader);
 
-  while(std::getline(myfile, line))
-    std::cout << lineNr++ << ": " << line << std::endl;
+  while(std::getline(myfile, line)) {
+    printf("%d: %s\n", lineNr++, line.c_str());
+  }
 }
 
-int nrOfLines(std::string in) {
-  int number_of_lines = 0;
+uint32_t nrOfLines(std::string in) {
+  uint32_t number_of_lines = 0;
   std::string line;
   std::stringstream myfile(in);
 
@@ -30,7 +27,7 @@ int nrOfLines(std::string in) {
   return number_of_lines;
 }
 
-/// Try to find in the Haystack the Needle - ignore case
+// Try to find a Needle in a Haystack - ignore case
 bool findString(const std::string & inStr, const std::string & pattern) {
   auto it = std::search(
     inStr.begin(), inStr.end(),
@@ -49,7 +46,7 @@ bool printErrorAndWarnings(const std::string strOutput) {
       if(findString(vline, " is not yet complete")) // version warning
         continue;
       foundError = true;
-      std::cout << vline << std::endl;
+      printf("%s\n", vline.c_str());
     }
   }
   return foundError;
@@ -80,17 +77,22 @@ void _parseIncludes(std::string &in, std::string &out) {
       file = file.substr(1, file.size() - 2);
       std::ifstream infile(file);
       if(!infile.good()) {
-        std::cout << "could not open file: " << file << std::endl;
+        printf("Could not open file: %s\n", file.c_str());
         exit(1);
       }
       std::string newStr;
-      while(getline(infile, line))
-        newStr += line + "\n";
+      newStr.reserve(100);
+      while(getline(infile, line)) {
+        newStr += line;
+        newStr += "\n";
+      }
       _parseIncludes(newStr, out);
 
     }
-    else
-      out += line + "\n";
+    else {
+      out += line;
+      out += "\n";
+    }
   }
 }
 
@@ -101,6 +103,7 @@ bool exists(const std::string& name) {
 
 std::string parseInludes(std::string &in) {
   std::string out;
+  out.reserve(500);
   _parseIncludes(in, out);
   return out;
 }
@@ -109,18 +112,22 @@ enum class State { common, vertex, fragment };
 
 int main(int argc, char *argv[]) {
   if(argc != 2) {
-    std::cout << "shaderCompiler filename " << std::endl;
+    printf("./glsl-compiler filename\n");
     return 1;
   }
   std::string inFile(argv[1]);
   std::ifstream infile(inFile + ".glsl");
   if(!infile.is_open()) {
-    std::cout << "Could not open file: " << argv[1] << ".glsl" << std::endl;
+    printf("Could not open file: %s.glsl\n", argv[1]);
     exit(1);
   }
-  std::string line;
   std::string vertex, fragment, common;
+  vertex.reserve(1000);
+  fragment.reserve(1000);
+  common.reserve(1000);
+
   State state = State::common;
+  std::string line;
   while(std::getline(infile, line)) {
     if(line.find("@vert") != std::string::npos) {
       state = State::vertex;
@@ -130,22 +137,33 @@ int main(int argc, char *argv[]) {
       state = State::fragment;
       continue;
     }
-    if(state == State::common)
-      common += line + "\n";
-    else if(state == State::vertex) {
-      vertex += line + "\n";;
+    if(state == State::common) {
+      common += line;
+      common += "\n";
     }
-    else if(state == State::fragment)
-      fragment += line + "\n";
+    else if(state == State::vertex) {
+      vertex += line;
+      vertex += "\n";
+
+    }
+    else if(state == State::fragment) {
+      fragment += line;
+      fragment += "\n";
+    }
+    else {
+      assert(false && "shader stage is not supported");
+    }
   }
   common = parseInludes(common);
   vertex = parseInludes(vertex);
   fragment = parseInludes(fragment);
-  const std::string outVertex = common + vertex;
-  const std::string outFragment = common + fragment;
+  const auto outVertex = common + vertex;
+  const auto outFragment = common + fragment;
 
-  const std::string vf = inFile + ".vert";
-  const std::string ff = inFile + ".frag";
+  char vf[50];
+  char ff[50];
+  snprintf(vf, sizeof(vf), "%s.vert", inFile.c_str());
+  snprintf(ff, sizeof(ff), "%s.frag", inFile.c_str());
 
   std::ofstream outVertexFile(vf, std::ofstream::out);
   std::ofstream outFragmentFile(ff, std::ofstream::out);
@@ -160,24 +178,25 @@ int main(int argc, char *argv[]) {
 
   std::filesystem::create_directory("builds");
   
-  const std::string vertexSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangValidator -V " + vf + " -o builds/" + vf + ".spv";
-  const std::string fragmentSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangValidator -V " + ff + " -o builds/" + ff + ".spv";
-
-  std::cout << vertexSpv << std::endl;
+  char vertexSpv[150];
+  char fragmentSpv[150];
+  const auto vulkanSdk = std::getenv("VULKAN_SDK");
+  snprintf(vertexSpv, sizeof(vertexSpv), "%s /bin/glslangValidator -V %s -o builds %s.spv", vulkanSdk, vf, vf);
+  snprintf(fragmentSpv, sizeof(fragmentSpv), "%s /bin/glslangValidator -F %s -o builds %s.spv", vulkanSdk, ff, ff);
 
   bool foundError = false;
 
-  std::cout << inFile << std::endl;
-  foundError = printErrorAndWarnings(exec(vertexSpv.c_str()));
+  printf("%s\n", inFile.c_str());
+  foundError = printErrorAndWarnings(exec(vertexSpv));
   if(foundError)
     printShader(outVertex);
 
-  foundError = printErrorAndWarnings(exec(fragmentSpv.c_str()));
+  foundError = printErrorAndWarnings(exec(fragmentSpv));
   if(foundError)
     printShader(outFragment);
 
-  remove(vf.c_str());
-  remove(ff.c_str());
+  remove(vf);
+  remove(ff);
 
   return 0;
 }

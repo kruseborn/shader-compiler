@@ -1,0 +1,14 @@
+mg_cc_executable(
+    NAME
+        spirv-reflection
+    SRCS
+        "spirv-reflection.h"
+        "create-shader-structs.cpp"
+        "parser.cpp"
+        "main.cpp"
+    COPTS
+        ${LLVM_FLAGS}
+    DEPS
+        spirv-cross-glsl
+        stdc++fs
+)

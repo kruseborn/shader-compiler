@@ -9,7 +9,7 @@
 #include <array>
 #include <cctype>
 #include <cstdlib>
-
+#include <filesystem>
 
 void printShader(const std::string &shader) {
   int lineNr = 1;
@@ -147,8 +147,10 @@ int main(int argc, char *argv[]) {
   const std::string vf = inFile + ".vert";
   const std::string ff = inFile + ".frag";
 
-  std::ofstream outVertexFile(vf);
-  std::ofstream outFragmentFile(ff);
+  std::ofstream outVertexFile(vf, std::ofstream::out);
+  std::ofstream outFragmentFile(ff, std::ofstream::out);
+  assert(outVertexFile.is_open() && "could not create .vert file");
+  assert(outFragmentFile.is_open() && "could not create .frag file");
 
   outVertexFile << outVertex;
   outFragmentFile << outFragment;
@@ -156,8 +158,12 @@ int main(int argc, char *argv[]) {
   outVertexFile.close();
   outFragmentFile.close();
 
-  const std::string vertexSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangvalidator -V " + vf + " -o builds/" + vf + ".spv";
-  const std::string fragmentSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangvalidator -V " + ff + " -o builds/" + ff + ".spv";
+  std::filesystem::create_directory("builds");
+  
+  const std::string vertexSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangValidator -V " + vf + " -o builds/" + vf + ".spv";
+  const std::string fragmentSpv = std::string(std::getenv("VULKAN_SDK")) + "/bin/glslangValidator -V " + ff + " -o builds/" + ff + ".spv";
+
+  std::cout << vertexSpv << std::endl;
 
   bool foundError = false;
 

@@ -39,5 +39,7 @@ layout (location = 0) in Data inData;
 layout(set=1, binding=0) uniform sampler2D sTexture;
 
 void main() {
-    outColor = inData.Color * texture(sTexture, inData.UV.st);
+    // from common.glsl
+    vec4 red = redColor();
+    outColor = inData.color * texture(sTexture, inData.uv.st) * red;
 }

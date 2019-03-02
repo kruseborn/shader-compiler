@@ -1,8 +1,10 @@
 mg_cc_executable(
     NAME
-        shader-compiler
+        glsl-compiler
     SRCS
         main.cpp
     COPTS
         ${LLVM_FLAGS}
+    DEPS
+        stdc++fs
 )

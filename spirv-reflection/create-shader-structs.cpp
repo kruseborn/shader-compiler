@@ -26,7 +26,7 @@ void createHeader(FILE *file) {
 void createFooter(FILE *file) {
   fprintf(file, "\n");
   fprintf(file, "} // shaders\n");
-  fprintf(file, "} // vtk\n");
+  fprintf(file, "} // mg\n");
 }
 
 void createShaderHeader(FILE *file, const Shader &shader) {

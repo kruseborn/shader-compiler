@@ -1,9 +1,10 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.12)
 
 project(ShaderCompiler)
 
-include(cmake-modules/helper.cmake)
 include(cmake-modules/copts.cmake)
+include(cmake-modules/platform.cmake)
+include(cmake-modules/helper.cmake)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib)

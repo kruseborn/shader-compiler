@@ -6,6 +6,7 @@
 #include <cassert>
 #include <algorithm>
 #include <filesystem>
+#include <cctype>
 
 void printShader(const std::string &shader) {
   uint32_t lineNr = 1;
@@ -55,8 +56,12 @@ bool printErrorAndWarnings(const std::string strOutput) {
 std::string exec(const char* cmd) {
   char buffer[128];
   std::string result = "";
+#ifdef _WIN32
+  std::shared_ptr<FILE> pipe(_popen(cmd, "r"), _pclose);
+#else
   std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-  
+
+#endif
   if(!pipe) assert(false);
   while(!feof(pipe.get())) {
     if(fgets(buffer, 128, pipe.get()) != NULL)

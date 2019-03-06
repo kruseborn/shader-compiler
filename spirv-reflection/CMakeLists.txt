@@ -1,3 +1,8 @@
+list(APPEND DEPS spirv-cross-glsl)
+if(UNIX)
+	list(APPEND DEPS stdc++fs)
+endif()
+
 mg_cc_executable(
     NAME
         spirv-reflection
@@ -7,8 +12,7 @@ mg_cc_executable(
         "parser.cpp"
         "main.cpp"
     COPTS
-        ${LLVM_FLAGS}
+        ${CPP_FLAGS}
     DEPS
-        spirv-cross-glsl
-        stdc++fs
+        ${DEPS}
 )

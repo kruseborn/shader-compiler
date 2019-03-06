@@ -1,10 +1,15 @@
+list(APPEND DEPS "")
+if(UNIX)
+	list(APPEND DEPS stdc++fs)
+endif()
+
 mg_cc_executable(
     NAME
         glsl-compiler
     SRCS
         main.cpp
     COPTS
-        ${LLVM_FLAGS}
+        ${CPP_FLAGS}
     DEPS
-        stdc++fs
+        ${DEPS}
 )

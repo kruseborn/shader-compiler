@@ -181,16 +181,16 @@ int main(int argc, char *argv[]) {
   outVertexFile.close();
   outFragmentFile.close();
 
-  std::filesystem::create_directory("builds");
+  std::filesystem::create_directory("build");
   
   char vertexSpv[150];
   char fragmentSpv[150];
   const auto vulkanSdk = std::getenv("VULKAN_SDK");
-  snprintf(vertexSpv, sizeof(vertexSpv), "%s /bin/glslangValidator -V %s -o builds %s.spv", vulkanSdk, vf, vf);
-  snprintf(fragmentSpv, sizeof(fragmentSpv), "%s /bin/glslangValidator -F %s -o builds %s.spv", vulkanSdk, ff, ff);
+  assert(strlen(vulkanSdk) > 0 && "VULKAN_SDK is not set");
+  snprintf(vertexSpv, sizeof(vertexSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, vf, vf);
+  snprintf(fragmentSpv, sizeof(fragmentSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, ff, ff);
 
   bool foundError = false;
-
   printf("%s\n", inFile.c_str());
   foundError = printErrorAndWarnings(exec(vertexSpv));
   if(foundError)

@@ -37,8 +37,8 @@ bool findString(const std::string & inStr, const std::string & pattern) {
   );
   return (it != inStr.end());
 }
-bool printErrorAndWarnings(const std::string strOutput) {
-  bool foundError = false;
+std::string getErrorAndWarnings(const std::string strOutput) {
+  std::string errorString;
   std::istringstream vstream(strOutput);
   std::string vline;
   while(std::getline(vstream, vline)) {
@@ -46,11 +46,10 @@ bool printErrorAndWarnings(const std::string strOutput) {
     if(findString(vline, "warning") || findString(vline, "error")) {
       if(findString(vline, " is not yet complete")) // version warning
         continue;
-      foundError = true;
-      printf("%s\n", vline.c_str());
+      errorString += vline + "\n";
     }
   }
-  return foundError;
+  return errorString;
 }
 
 std::string exec(const char* cmd) {
@@ -89,7 +88,7 @@ void _parseIncludes(std::string &in, std::string &out) {
       newStr.reserve(100);
       while(getline(infile, line)) {
         newStr += line;
-        newStr += "\n";
+        newStr += "\n"; 
       }
       _parseIncludes(newStr, out);
 
@@ -190,15 +189,18 @@ int main(int argc, char *argv[]) {
   snprintf(vertexSpv, sizeof(vertexSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, vf, vf);
   snprintf(fragmentSpv, sizeof(fragmentSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, ff, ff);
 
-  bool foundError = false;
   printf("%s\n", inFile.c_str());
-  foundError = printErrorAndWarnings(exec(vertexSpv));
-  if(foundError)
+  auto errorString = getErrorAndWarnings(exec(vertexSpv));
+  if (errorString.size()) {
     printShader(outVertex);
+    printf("%s\n", errorString.c_str()); 
+  } 
 
-  foundError = printErrorAndWarnings(exec(fragmentSpv));
-  if(foundError)
+  errorString = getErrorAndWarnings(exec(fragmentSpv));
+  if (errorString.size()) {
     printShader(outFragment);
+    printf("%s\n", errorString.c_str());
+  }
 
   remove(vf);
   remove(ff);

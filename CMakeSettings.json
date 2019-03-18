@@ -14,7 +14,7 @@
       "ctestCommandArgs": ""
     },
     {
-      "name": "Relase",
+      "name": "Release",
       "generator": "Ninja",
       "configurationType": "Release",
       "inheritEnvironments": [

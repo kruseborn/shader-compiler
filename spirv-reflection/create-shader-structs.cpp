@@ -16,7 +16,7 @@ void createHeader(FILE *file) {
   fprintf(file, "namespace mg {\n");
   fprintf(file, "namespace shaders {\n");
   fprintf(file, "\n");
-  fprintf(file, "enum class Resources { UBO, COMBINED_IMAGE_SAMPLER };\n");
+  fprintf(file, "enum class Resources { UBO, COMBINED_IMAGE_SAMPLER, SSBO };\n");
   fprintf(file, "struct VertexInputState {\n");
   fprintf(file, "  VkFormat format;\n");
   fprintf(file, "  uint32_t location, offset, binding, size;\n");
@@ -37,24 +37,25 @@ void createShaderFooter(FILE *file, const Shader &shader) {
   fprintf(file, "} //%s\n", shader.name.c_str());
 }
 
-void createInternalStruct(FILE *file, std::vector<UboStruct> uboStructs) {
-  for(int32_t i = int32_t(uboStructs.size()) - 1; i >= 0; i--) {
-    fprintf(file, "  struct %s {\n", uboStructs[i].name.c_str());
-    for(uint32_t j = 0; j < uint32_t(uboStructs[i].elements.size()); j++) {
-      const auto &element = uboStructs[i].elements[j];
+void createInternalStruct(FILE *file, std::vector<BufferStruct> shaderBuffers) {
+  for (int32_t i = int32_t(shaderBuffers.size()) - 1; i >= 0; i--) {
+    fprintf(file, "  struct %s {\n", shaderBuffers[i].name.c_str());
+    for (uint32_t j = 0; j < uint32_t(shaderBuffers[i].elements.size()); j++) {
+      const auto &element = shaderBuffers[i].elements[j];
       fprintf(file, "    %s %s;\n", element.type.c_str(), element.name.c_str());
     }
     fprintf(file, "  };\n");
   }
 }
 
-void createUboStruct(FILE *file, const Shader &shader) {
-  for(uint32_t i = 0; i < uint32_t(shader.ubos.size()); i++) {
-    fprintf(file, "struct %s {\n", shader.ubos[i].name.c_str());
+void createUboStruct(FILE *file,
+                     const std::vector<ShaderBuffer> &shaderBuffers) {
+  for (uint32_t i = 0; i < uint32_t(shaderBuffers.size()); i++) {
+    fprintf(file, "struct %s {\n", shaderBuffers[i].name.c_str());
 
-    createInternalStruct(file, shader.ubos[i].uboStructs);
-    for(uint32_t j = 0; j < uint32_t(shader.ubos[i].elements.size()); j++) {
-      const auto &element = shader.ubos[i].elements[j];
+    createInternalStruct(file, shaderBuffers[i].bufferStructs);
+    for (uint32_t j = 0; j < uint32_t(shaderBuffers[i].elements.size()); j++) {
+      const auto &element = shaderBuffers[i].elements[j];
       fprintf(file, "  %s %s;\n", element.type.c_str(), element.name.c_str());
     }
     fprintf(file, "};\n");
@@ -103,7 +104,9 @@ void createCppStructs(const std::vector<Shader> &shaders) {
   createHeader(file);
   for(const auto &shader : shaders) {
     createShaderHeader(file, shader);
-    if(shader.ubos.size() > 0) createUboStruct(file, shader);
+    if (shader.ubos.size() > 0) createUboStruct(file, shader.ubos);
+    if (shader.ssbos.size() > 0) createUboStruct(file, shader.ssbos);
+
     if(shader.vertexInputs.size() > 0) createInputAssembler(file, shader);
     if(shader.descriptorSets.size() > 0) createDescriptorSets(file, shader);
     createShaderFooter(file, shader);
@@ -111,3 +114,4 @@ void createCppStructs(const std::vector<Shader> &shaders) {
   createFooter(file);
   fclose(file);
 }
+

@@ -14,10 +14,11 @@
 #define ivec3 "glm::ivec3"
 #define ivec2 "glm::ivec2"
 
-enum DescriptorSetTypes { UBO, COMBINED_IMAGE_SAMPLER };
+enum DescriptorSetTypes { UBO, COMBINED_IMAGE_SAMPLER, SSBO };
 static const char * descriptorSetTypesStr[] = {
   "UBO",
   "COMBINED_IMAGE_SAMPLER",
+  "SSBO"
 };
 enum class InputFormats {
   FORMAT_R32_SFLOAT,
@@ -51,24 +52,26 @@ static const char * InputFormatsTypeStr[] = {
   ivec4,
 };
 
-struct UbuElement {
+struct BufferElement {
   std::string type;
   std::string name;
   uint32_t arraySize;
 };
 
-struct UboStruct {
+struct BufferStruct {
   std::string name;
-  std::vector<UbuElement> elements;
+  std::vector<BufferElement> elements;
 };
 
-struct Ubo {
+struct ShaderBuffer {
   std::string name;
   uint32_t sizeInBytes;
-  std::vector<UbuElement> elements;
-  std::vector<UboStruct> uboStructs;
+  std::vector<BufferElement> elements;
+  std::vector<BufferStruct> bufferStructs;
 };
-using Ubos = std::vector<Ubo>;
+using Ubos = std::vector<ShaderBuffer>;
+using SSBOs = std::vector<ShaderBuffer>;
+
 
 struct VertexInput {
   std::string name;
@@ -87,6 +90,7 @@ using DescriptorSets = std::vector<DescriptorSet>;
 struct Shader {
   std::string name;
   Ubos ubos;
+  SSBOs ssbos;
   VertexInputs vertexInputs;
   DescriptorSets descriptorSets;
   bool hasPushContant;
@@ -94,3 +98,4 @@ struct Shader {
 
 void createCppStructs(const std::vector<Shader> &shaders);
 Shader parseShader(const std::string &name, const std::string &path);
+Shader parseComputeShader(const std::string &name, const std::string &path);

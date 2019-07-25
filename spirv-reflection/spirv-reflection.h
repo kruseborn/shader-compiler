@@ -14,7 +14,6 @@
 #define ivec3 "glm::ivec3"
 #define ivec2 "glm::ivec2"
 
-enum DescriptorSetTypes { UBO, COMBINED_IMAGE_SAMPLER, SSBO };
 static const char * descriptorSetTypesStr[] = {
   "UBO",
   "COMBINED_IMAGE_SAMPLER",
@@ -71,7 +70,7 @@ struct ShaderBuffer {
 };
 using Ubos = std::vector<ShaderBuffer>;
 using SSBOs = std::vector<ShaderBuffer>;
-
+using PushConstants = std::vector<ShaderBuffer>;
 
 struct VertexInput {
   std::string name;
@@ -83,7 +82,6 @@ using VertexInputs = std::vector<VertexInput>;
 struct DescriptorSet {
   std::string name;
   uint32_t set, location, binding;
-  DescriptorSetTypes descriptorSetType;
 };
 using DescriptorSets = std::vector<DescriptorSet>;
 
@@ -91,9 +89,9 @@ struct Shader {
   std::string name;
   Ubos ubos;
   SSBOs ssbos;
+  PushConstants pushConstants;
   VertexInputs vertexInputs;
   DescriptorSets descriptorSets;
-  bool hasPushContant;
 };
 
 void createCppStructs(const std::vector<Shader> &shaders);

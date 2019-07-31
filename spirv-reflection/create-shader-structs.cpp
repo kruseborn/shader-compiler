@@ -48,7 +48,7 @@ void createInternalStruct(FILE *file, std::vector<BufferStruct> shaderBuffers) {
   }
 }
 
-void createUboStruct(FILE *file,
+void createShaderStruct(FILE *file,
                      const std::vector<ShaderBuffer> &shaderBuffers) {
   for (uint32_t i = 0; i < uint32_t(shaderBuffers.size()); i++) {
     fprintf(file, "struct %s {\n", shaderBuffers[i].name.c_str());
@@ -80,23 +80,15 @@ void createInputAssembler(FILE *file, const Shader &shader) {
 }
 
 void createDescriptorSets(FILE *file, const Shader &shader) {
-  fprintf(file, "namespace shaderResource {\n");
-  fprintf(file, "  static bool hasPushConstant = %s;\n", shader.hasPushContant ? "true": "false");
-  fprintf(file, "  static Resources resources[%u] = {\n", uint32_t(shader.descriptorSets.size()));
-  for(uint32_t i = 0; i < uint32_t(shader.descriptorSets.size()); i++) {
-    fprintf(file, "    Resources::%s,\n", descriptorSetTypesStr[shader.descriptorSets[i].descriptorSetType]);
-  }
-  fprintf(file, "  };\n");
-  fprintf(file, "  union DescriptorSets {\n");
-  fprintf(file, "    struct {\n");
+  fprintf(file, "union DescriptorSets {\n");
+  fprintf(file, "  struct {\n");
   for(uint32_t i = 0; i < uint32_t(shader.descriptorSets.size()); i++) {
     const auto &descriptorSet = shader.descriptorSets[i];
-    fprintf(file, "      VkDescriptorSet %s;\n", descriptorSet.name.c_str());
+    fprintf(file, "    VkDescriptorSet %s;\n", descriptorSet.name.c_str());
   }
-  fprintf(file, "    };\n");
-  fprintf(file, "    VkDescriptorSet values[%u];\n", uint32_t(shader.descriptorSets.size()));
   fprintf(file, "  };\n");
-  fprintf(file, "  } // shaderResource\n");
+  fprintf(file, "  VkDescriptorSet values[%u];\n", uint32_t(shader.descriptorSets.size()));
+  fprintf(file, "};\n");
 }
 
 void createCppStructs(const std::vector<Shader> &shaders) {
@@ -104,8 +96,9 @@ void createCppStructs(const std::vector<Shader> &shaders) {
   createHeader(file);
   for(const auto &shader : shaders) {
     createShaderHeader(file, shader);
-    if (shader.ubos.size() > 0) createUboStruct(file, shader.ubos);
-    if (shader.ssbos.size() > 0) createUboStruct(file, shader.ssbos);
+    if (shader.ubos.size() > 0) createShaderStruct(file, shader.ubos);
+    if (shader.ssbos.size() > 0) createShaderStruct(file, shader.ssbos);
+    if (shader.pushConstants.size() > 0) createShaderStruct(file, shader.pushConstants);
 
     if(shader.vertexInputs.size() > 0) createInputAssembler(file, shader);
     if(shader.descriptorSets.size() > 0) createDescriptorSets(file, shader);

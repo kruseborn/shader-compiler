@@ -1,11 +1,13 @@
 #include "spirv-reflection.h"
+#include <algorithm>
 #include <cctype>
 #include <cstdio>
 #include <fstream>
-#include <algorithm>
 #include <spirv_glsl.hpp>
 
-std::vector<uint32_t> readBinaryFromDisc(const std::string &fileName) {
+template <class A, class B> void insert(A &a, B &b) { a.insert(std::end(a), std::begin(b), std::end(b)); }
+
+static std::vector<uint32_t> readBinaryFromDisc(const std::string &fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
   std::streamsize size = std::streamsize(file.tellg());
   file.seekg(0, std::ios::beg);
@@ -18,7 +20,7 @@ std::vector<uint32_t> readBinaryFromDisc(const std::string &fileName) {
   return {};
 }
 
-std::string getBaseTypePrefix(spirv_cross::SPIRType::BaseType baseType) {
+static std::string getBaseTypePrefix(spirv_cross::SPIRType::BaseType baseType) {
   std::string typePrefix;
   if (baseType == spirv_cross::SPIRType::BaseType::Float)
     typePrefix = "";
@@ -33,13 +35,11 @@ std::string getBaseTypePrefix(spirv_cross::SPIRType::BaseType baseType) {
   return typePrefix;
 }
 
-BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler,
-                           const spirv_cross::SPIRType &type, uint32_t index,
-                           std::vector<BufferStruct> &uboStructs);
+static BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler, const spirv_cross::SPIRType &type,
+                                  uint32_t index, std::vector<BufferStruct> &uboStructs);
 
-void parseStruct(const spirv_cross::CompilerGLSL &compiler,
-                 const std::string &name, const spirv_cross::SPIRType &type,
-                 std::vector<BufferStruct> &bufferStructs) {
+static void parseStruct(const spirv_cross::CompilerGLSL &compiler, const std::string &name,
+                        const spirv_cross::SPIRType &type, std::vector<BufferStruct> &bufferStructs) {
   BufferStruct bufferStruct = {};
   bufferStruct.name = name;
   const auto member_count = type.member_types.size();
@@ -54,15 +54,13 @@ void parseStruct(const spirv_cross::CompilerGLSL &compiler,
   bufferStructs.push_back(bufferStruct);
 }
 
-BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler,
-                           const spirv_cross::SPIRType &type, uint32_t index,
-                           std::vector<BufferStruct> &bufferStructs) {
+static BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler, const spirv_cross::SPIRType &type,
+                                  uint32_t index, std::vector<BufferStruct> &bufferStructs) {
   BufferElement element;
   element.arraySize = 0;
   const auto &member_type = compiler.get_type(type.member_types[index]);
 
-  if (type.basetype == spirv_cross::SPIRType::BaseType::Struct &&
-      member_type.member_types.size() > 0) {
+  if (type.basetype == spirv_cross::SPIRType::BaseType::Struct && member_type.member_types.size() > 0) {
     size_t array_stride = compiler.type_struct_member_array_stride(type, index);
 
     auto structName = compiler.get_member_name(type.self, index);
@@ -85,9 +83,7 @@ BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler,
     if (member_type.vecsize == 4)
       element.type += vec4;
     else if (member_type.vecsize == 3)
-      assert(
-          false &&
-          "do not use vec3, glsl and c/c++ does not have the same alignment");
+      assert(false && "do not use vec3, glsl and c/c++ does not have the same alignment");
     else if (member_type.vecsize == 2)
       element.type += vec2;
   } else {
@@ -116,8 +112,7 @@ BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler,
   return element;
 }
 
-static ShaderBuffer parseResource(const spirv_cross::CompilerGLSL &compiler,
-                                  const spirv_cross::Resource &resource) {
+static ShaderBuffer parseResource(const spirv_cross::CompilerGLSL &compiler, const spirv_cross::Resource &resource) {
   ShaderBuffer shaderBuffer = {};
 
   auto &type = compiler.get_type(resource.base_type_id);
@@ -127,15 +122,13 @@ static ShaderBuffer parseResource(const spirv_cross::CompilerGLSL &compiler,
   const auto member_count = type.member_types.size();
   for (uint32_t i = 0; i < member_count; i++) {
 
-    const auto element =
-        parseElement(compiler, type, i, shaderBuffer.bufferStructs);
+    const auto element = parseElement(compiler, type, i, shaderBuffer.bufferStructs);
     shaderBuffer.elements.push_back(element);
   }
   return shaderBuffer;
 }
 
-Ubos parseUbos(const spirv_cross::CompilerGLSL &compiler,
-               const spirv_cross::ShaderResources &resources) {
+Ubos parseUbos(const spirv_cross::CompilerGLSL &compiler, const spirv_cross::ShaderResources &resources) {
   Ubos ubos = {};
   ubos.reserve(resources.uniform_buffers.size());
 
@@ -146,8 +139,7 @@ Ubos parseUbos(const spirv_cross::CompilerGLSL &compiler,
   return ubos;
 }
 
-PushConstants parseSSBOs(const spirv_cross::CompilerGLSL &compiler,
-                         const spirv_cross::ShaderResources &resources) {
+PushConstants parseSSBOs(const spirv_cross::CompilerGLSL &compiler, const spirv_cross::ShaderResources &resources) {
   SSBOs sSBOs = {};
   sSBOs.reserve(resources.storage_buffers.size());
 
@@ -176,10 +168,8 @@ VertexInputs parseVertexInput(const spirv_cross::CompilerGLSL &compiler,
 
     auto &type = compiler.get_type(resource.type_id);
 
-    vertexInput.location = compiler.get_decoration(
-        resource.id, spv::Decoration::DecorationLocation);
-    vertexInput.binding = compiler.get_decoration(
-        resource.id, spv::Decoration::DecorationBinding);
+    vertexInput.location = compiler.get_decoration(resource.id, spv::Decoration::DecorationLocation);
+    vertexInput.binding = compiler.get_decoration(resource.id, spv::Decoration::DecorationBinding);
 
     assert(type.columns == 1);
     InputFormats format;
@@ -229,34 +219,27 @@ VertexInputs parseVertexInput(const spirv_cross::CompilerGLSL &compiler,
     vertexInput.name = compiler.get_name(resource.id);
     vertexInputs.push_back(vertexInput);
   }
-  std::sort(
-      std::begin(vertexInputs), std::end(vertexInputs),
-      [](const auto &a, const auto &b) { return a.location < b.location; });
+  std::sort(std::begin(vertexInputs), std::end(vertexInputs),
+            [](const auto &a, const auto &b) { return a.location < b.location; });
 
   for (uint32_t i = 1; i < uint32_t(vertexInputs.size()); i++) {
-    vertexInputs[i].offset =
-        vertexInputs[i - 1].size + vertexInputs[i - 1].offset;
+    vertexInputs[i].offset = vertexInputs[i - 1].size + vertexInputs[i - 1].offset;
   }
   return vertexInputs;
 }
 
-static DescriptorSet
-parseDescriptorSet(const spirv_cross::CompilerGLSL &compiler,
-                   const spirv_cross::Resource &resource) {
+static DescriptorSet parseDescriptorSet(const spirv_cross::CompilerGLSL &compiler,
+                                        const spirv_cross::Resource &resource) {
   DescriptorSet descriptorSet = {};
   descriptorSet.name = compiler.get_name(resource.id);
-  descriptorSet.set = compiler.get_decoration(
-      resource.id, spv::Decoration::DecorationDescriptorSet);
-  descriptorSet.location =
-      compiler.get_decoration(resource.id, spv::Decoration::DecorationLocation);
-  descriptorSet.binding =
-      compiler.get_decoration(resource.id, spv::Decoration::DecorationBinding);
+  descriptorSet.set = compiler.get_decoration(resource.id, spv::Decoration::DecorationDescriptorSet);
+  descriptorSet.location = compiler.get_decoration(resource.id, spv::Decoration::DecorationLocation);
+  descriptorSet.binding = compiler.get_decoration(resource.id, spv::Decoration::DecorationBinding);
   return descriptorSet;
 }
 
-DescriptorSets
-parseDescriptorSets(const spirv_cross::CompilerGLSL &compiler,
-                    const spirv_cross::ShaderResources &resources) {
+DescriptorSets parseDescriptorSets(const spirv_cross::CompilerGLSL &compiler,
+                                   const spirv_cross::ShaderResources &resources) {
   DescriptorSets descriptorSets = {};
 
   for (auto &resource : resources.sampled_images) {
@@ -275,67 +258,99 @@ parseDescriptorSets(const spirv_cross::CompilerGLSL &compiler,
     DescriptorSet descriptorSet = parseDescriptorSet(compiler, resource);
     descriptorSets.push_back(descriptorSet);
   }
-
+  for (auto &resource : resources.acceleration_structures) {
+    DescriptorSet descriptorSet = parseDescriptorSet(compiler, resource);
+    descriptorSets.push_back(descriptorSet);
+  }
+  for (auto &resource : resources.storage_images) {
+    DescriptorSet descriptorSet = parseDescriptorSet(compiler, resource);
+    descriptorSets.push_back(descriptorSet);
+  }
   return descriptorSets;
 }
 
-Shader parseSpirv(const std::string &name, const std::string &path,
-                  const std::string &type) {
+void parseSpirv(Shader *shader, const std::string &path, const std::string &type) {
+
   std::vector<uint32_t> spirv_binary = readBinaryFromDisc(path);
   spirv_cross::CompilerGLSL compiler(std::move(spirv_binary));
 
   spirv_cross::ShaderResources resources = compiler.get_shader_resources();
 
-  Shader shader = {};
-  shader.name = name;
-  shader.ubos = parseUbos(compiler, resources);
-  shader.ssbos = parseSSBOs(compiler, resources);
-  shader.pushConstants = parsePushConstant(compiler, resources);
+  insert(shader->ubos, parseUbos(compiler, resources));
+  insert(shader->ssbos, parseSSBOs(compiler, resources));
+  insert(shader->pushConstants, parsePushConstant(compiler, resources));
+  if (type == "vert") {
+    insert(shader->vertexInputs, parseVertexInput(compiler, resources));
+  }
+  insert(shader->descriptorSets, parseDescriptorSets(compiler, resources));
+}
 
-  if (type == "vert")
-    shader.vertexInputs = parseVertexInput(compiler, resources);
-  shader.descriptorSets = parseDescriptorSets(compiler, resources);
-  return shader;
+template <class T, class Func> void makeUnqiue(T &t, Func &&func) {
+  auto it = std::unique(std::begin(t), std::end(t), func);
+  t.resize(std::distance(std::begin(t), it));
+}
+
+void sortAndMakeUnqiue(Shader *shader) {
+  std::stable_sort(std::begin(shader->descriptorSets), std::end(shader->descriptorSets),
+                   [](const auto &a, const auto &b) {
+                     return std::tie(a.set, a.location, a.binding) < std::tie(b.set, b.location, b.binding);
+                   });
+
+  std::stable_sort(std::begin(shader->ubos), std::end(shader->ubos),
+                   [](const auto &a, const auto &b) { return a.name < b.name; });
+  std::stable_sort(std::begin(shader->ssbos), std::end(shader->ssbos),
+                   [](const auto &a, const auto &b) { return a.name < b.name; });
+  std::stable_sort(std::begin(shader->pushConstants), std::end(shader->pushConstants),
+                   [](const auto &a, const auto &b) { return a.name < b.name; });
+
+  makeUnqiue(shader->descriptorSets, [](auto &a, auto &b) { return a.set == b.set; });
+  makeUnqiue(shader->ubos, [](auto &a, auto &b) { return a.name == b.name; });
+  makeUnqiue(shader->ssbos, [](auto &a, auto &b) { return a.name == b.name; });
+  makeUnqiue(shader->pushConstants, [](auto &a, auto &b) { return a.name == b.name; });
 }
 
 Shader parseComputeShader(const std::string &name, const std::string &path) {
-  auto computeShader = parseSpirv(name, path + ".comp.spv", "comp");
-  return computeShader;
+  Shader shader = {};
+  shader.name = name;
+
+  parseSpirv(&shader, path + ".comp.spv", "comp");
+  sortAndMakeUnqiue(&shader);
+  return shader;
 }
 
-Shader parseShader(const std::string &name, const std::string &path) {
-  auto vertexShader = parseSpirv(name, path + ".vert.spv", "vert");
-  auto fragmentShader = parseSpirv(name, path + ".frag.spv", "frag");
+Shader parseRasterizationShader(const std::string &name, const std::string &path) {
+  Shader shader = {};
+  shader.name = name;
 
-  const auto fragSize = fragmentShader.descriptorSets.size();
-  for (uint32_t i = 0; i < vertexShader.descriptorSets.size(); i++) {
-    for (uint32_t j = 0; j < fragSize; j++) {
-      auto d1 = vertexShader.descriptorSets[i];
-      auto d2 = fragmentShader.descriptorSets[j];
-      if (d1.name == d2.name) {
-        assert(std::tie(d1.name, d1.set, d1.location) ==
-               std::tie(d2.name, d2.set, d2.location));
-        goto CONTINUE;
-      }
-    }
-    fragmentShader.descriptorSets.push_back(vertexShader.descriptorSets[i]);
-  CONTINUE:
-    continue;
+  parseSpirv(&shader, path + ".vert.spv", "vert");
+  parseSpirv(&shader, path + ".frag.spv", "frag");
+
+  sortAndMakeUnqiue(&shader);
+
+  return shader;
+}
+
+static inline bool exists(const std::string &name) {
+  if (FILE *file = fopen(name.c_str(), "r")) {
+    fclose(file);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+Shader parseRayTracingShader(const std::string &name, const std::string &path) {
+  Shader shader = {};
+  shader.name = name;
+
+  parseSpirv(&shader, path + ".rgen.spv", "");
+  parseSpirv(&shader, path + ".rchit.spv", "");
+  parseSpirv(&shader, path + ".rmiss.spv", "");
+
+  if (exists(path + ".rint.spv")) {
+    parseSpirv(&shader, path + ".rint.spv", "");
   }
 
-  std::stable_sort(std::begin(fragmentShader.descriptorSets),
-            std::end(fragmentShader.descriptorSets),
-            [](const auto &a, const auto &b) {
-              return std::tie(a.set, a.location, a.binding) <
-                     std::tie(b.set, b.location, b.binding);
-            });
-  vertexShader.descriptorSets = fragmentShader.descriptorSets;
-  auto it = std::unique(std::begin(vertexShader.descriptorSets),
-                        std::end(vertexShader.descriptorSets),
-                        [](auto &a, auto &b) { return a.set == b.set; });
-  vertexShader.descriptorSets.resize(
-      std::distance(std::begin(vertexShader.descriptorSets), it));
-  
-  vertexShader.pushConstants = fragmentShader.pushConstants;
-  return vertexShader;
+  sortAndMakeUnqiue(&shader);
+  return shader;
 }

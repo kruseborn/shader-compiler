@@ -95,5 +95,7 @@ struct Shader {
 };
 
 void createCppStructs(const std::vector<Shader> &shaders);
-Shader parseShader(const std::string &name, const std::string &path);
+Shader parseRasterizationShader(const std::string &name, const std::string &path);
 Shader parseComputeShader(const std::string &name, const std::string &path);
+Shader parseRayTracingShader(const std::string &name,
+                                const std::string &path);

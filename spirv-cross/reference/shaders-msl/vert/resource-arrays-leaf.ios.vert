@@ -5,11 +5,6 @@
 
 using namespace metal;
 
-#ifndef SPIRV_CROSS_CONSTANT_ID_0
-#define SPIRV_CROSS_CONSTANT_ID_0 3
-#endif
-constant int arraySize = SPIRV_CROSS_CONSTANT_ID_0;
-
 struct storage_block
 {
     uint4 baz;
@@ -21,6 +16,11 @@ struct constant_block
     float4 foo;
     int bar;
 };
+
+#ifndef SPIRV_CROSS_CONSTANT_ID_0
+#define SPIRV_CROSS_CONSTANT_ID_0 3
+#endif
+constant int arraySize = SPIRV_CROSS_CONSTANT_ID_0;
 
 void doWork(device storage_block* (&storage)[2], constant constant_block* (&constants)[4], thread const array<texture2d<int>, 3> images)
 {
@@ -35,7 +35,7 @@ vertex void main0(device storage_block* storage_0 [[buffer(0)]], device storage_
         storage_0,
         storage_1,
     };
-    
+
     constant constant_block* constants[] =
     {
         constants_0,
@@ -43,7 +43,7 @@ vertex void main0(device storage_block* storage_0 [[buffer(0)]], device storage_
         constants_2,
         constants_3,
     };
-    
+
     doWork(storage, constants, images);
 }
 

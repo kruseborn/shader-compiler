@@ -1,5 +1,6 @@
 #include "spirv-reflection.h"
 
+#include <algorithm>
 #include <cstdio>
 
 const std::string mathPath = "glm/glm.hpp";
@@ -90,6 +91,18 @@ void createDescriptorSets(FILE *file, const Shader &shader) {
   fprintf(file, "  VkDescriptorSet values[%u];\n", uint32_t(shader.descriptorSets.size()));
   fprintf(file, "};\n");
 }
+void createFileNames(FILE *file, const Shader &shader) {
+  fprintf(file, "constexpr struct {\n");
+  for (uint64_t i = 0; i < shader.fileNames.size(); i++) {
+    const auto &fileName = shader.fileNames[i];
+    const auto lastindex = fileName.find_last_of(".");
+    auto rawname = fileName.substr(0, lastindex); 
+    std::replace(std::begin(rawname), std::end(rawname), '.', '_');
+    fprintf(file, "  const char *%s = \"%s\";\n", rawname.c_str(), fileName.c_str());
+  }
+  fprintf(file, "} files = {};\n");
+  fprintf(file, "constexpr const char *shader = \"%s\";\n", shader.name.c_str());
+}
 
 void createCppStructs(const std::vector<Shader> &shaders) {
   FILE *file = fopen("shaderPipelineInput.h", "w");
@@ -102,6 +115,7 @@ void createCppStructs(const std::vector<Shader> &shaders) {
 
     if(shader.vertexInputs.size() > 0) createInputAssembler(file, shader);
     if(shader.descriptorSets.size() > 0) createDescriptorSets(file, shader);
+    createFileNames(file, shader);
     createShaderFooter(file, shader);
   }
   createFooter(file);

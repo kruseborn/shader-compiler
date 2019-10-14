@@ -5,15 +5,14 @@
 
 using namespace metal;
 
-constant float X_tmp [[function_constant(0)]];
-constant float X = is_function_constant_defined(X_tmp) ? X_tmp : 4.0;
-constant uint3 gl_WorkGroupSize = uint3(2u, 1u, 1u);
-
 struct Data
 {
     float a;
     float b;
 };
+
+constant float X_tmp [[function_constant(0)]];
+constant float X = is_function_constant_defined(X_tmp) ? X_tmp : 4.0;
 
 struct Data_1
 {
@@ -25,6 +24,8 @@ struct SSBO
 {
     Data_1 outdata[1];
 };
+
+constant uint3 gl_WorkGroupSize [[maybe_unused]] = uint3(2u, 1u, 1u);
 
 constant Data _25[2] = { Data{ 1.0, 2.0 }, Data{ 3.0, 4.0 } };
 

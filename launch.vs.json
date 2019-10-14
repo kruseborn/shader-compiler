@@ -1,0 +1,24 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "glsl-compiler.exe (C:\\git\\shader-compiler\\bin\\glsl-compiler.exe)",
+      "name": "glsl-compiler.exe (C:\\git\\shader-compiler\\bin\\glsl-compiler.exe)",
+      "args": [
+        "procedural.ray"
+      ]
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "projectTarget": "spirv-reflection.exe (C:\\git\\shader-compiler\\bin\\spirv-reflection.exe)",
+      "name": "spirv-reflection.exe (C:\\git\\shader-compiler\\bin\\spirv-reflection.exe)",
+      "args": [
+        "build\\"
+      ]
+    }
+  ]
+}

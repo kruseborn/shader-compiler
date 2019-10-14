@@ -1,6 +1,6 @@
 #include "spirv-reflection.h"
 #include <filesystem>
-#include <set>
+#include <map>
 #include <tuple>
 
 struct ShaderFile {
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   const std::string pathToSpirv = argv[1];
-  std::set<ShaderFile> spirvShaders;
+  std::map<ShaderFile, std::vector<std::string>> spirvShaders;
 
   for (auto &p : std::filesystem::directory_iterator(pathToSpirv)) {
     const std::string path = p.path().generic_string();
@@ -46,27 +46,17 @@ int main(int argc, char *argv[]) {
     } else {
       assert("shader type is not supported");
     }
-    const auto pathWithoutExtension = path.substr(0, path.find(delimiter));
-    auto name = pathWithoutExtension.substr(pathWithoutExtension.find_last_of("/") + 1);
-    name = name.substr(name.find_first_of(".") + 1);
+    const auto pathWithoutExtension = path.substr(0, path.find("/"));
+    auto fullName = path.substr(path.find_last_of("/") + 1);
+    auto name = fullName.substr(0, fullName.find_first_of("."));
 
-    spirvShaders.insert({name, pathWithoutExtension, type});
+    spirvShaders[{name, pathWithoutExtension, type}].push_back(fullName);
   }
 
   std::vector<Shader> shaders;
   for (auto &spirvShader : spirvShaders) {
-    if (spirvShader.type == "comp") {
-      auto shader = parseComputeShader(spirvShader.name, spirvShader.path);
-      shaders.push_back(shader);
-    } else if (spirvShader.type == "glsl") {
-      auto shader = parseRasterizationShader(spirvShader.name, spirvShader.path);
-      shaders.push_back(shader);
-    } else if (spirvShader.type == "ray") {
-      auto shader = parseRayTracingShader(spirvShader.name, spirvShader.path);
-      shaders.push_back(shader);
-    } else {
-      assert("shader type is not supported");
-    }
+    auto shader = parseShader(spirvShader.first.name, spirvShader.first.path, spirvShader.second);
+    shaders.push_back(shader);
   }
   createCppStructs(shaders);
 

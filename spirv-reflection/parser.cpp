@@ -16,6 +16,7 @@ static std::vector<uint32_t> readBinaryFromDisc(const std::string &fileName) {
   if (file.read((char *)buffer.data(), size))
     return buffer;
 
+  printf("Could not open file: %s\n", fileName.c_str());
   assert(false);
   return {};
 }
@@ -61,7 +62,7 @@ static BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler, con
   const auto &member_type = compiler.get_type(type.member_types[index]);
 
   if (type.basetype == spirv_cross::SPIRType::BaseType::Struct && member_type.member_types.size() > 0) {
-    size_t array_stride = compiler.type_struct_member_array_stride(type, index);
+    //size_t array_stride = compiler.type_struct_member_array_stride(type, index);
 
     auto structName = compiler.get_member_name(type.self, index);
     assert(!structName.empty());
@@ -269,9 +270,8 @@ DescriptorSets parseDescriptorSets(const spirv_cross::CompilerGLSL &compiler,
   return descriptorSets;
 }
 
-void parseSpirv(Shader *shader, const std::string &path, const std::string &type) {
-
-  std::vector<uint32_t> spirv_binary = readBinaryFromDisc(path);
+void parseSpirv(Shader *shader, const std::string &path, const std::string &name, const std::string &type) {
+  std::vector<uint32_t> spirv_binary = readBinaryFromDisc(path + name);
   spirv_cross::CompilerGLSL compiler(std::move(spirv_binary));
 
   spirv_cross::ShaderResources resources = compiler.get_shader_resources();
@@ -309,48 +309,15 @@ void sortAndMakeUnqiue(Shader *shader) {
   makeUnqiue(shader->pushConstants, [](auto &a, auto &b) { return a.name == b.name; });
 }
 
-Shader parseComputeShader(const std::string &name, const std::string &path) {
+Shader parseShader(const std::string &name, const std::string &path, const std::vector<std::string> &fileNames) {
   Shader shader = {};
   shader.name = name;
+  const auto fullPath = path + "/";
 
-  parseSpirv(&shader, path + ".comp.spv", "comp");
-  sortAndMakeUnqiue(&shader);
-  return shader;
-}
-
-Shader parseRasterizationShader(const std::string &name, const std::string &path) {
-  Shader shader = {};
-  shader.name = name;
-
-  parseSpirv(&shader, path + ".vert.spv", "vert");
-  parseSpirv(&shader, path + ".frag.spv", "frag");
+  for (const auto &fileName: fileNames)
+    parseSpirv(&shader, fullPath, fileName, fileName.find("vert") != std::string::npos? "vert": "");
 
   sortAndMakeUnqiue(&shader);
-
-  return shader;
-}
-
-static inline bool exists(const std::string &name) {
-  if (FILE *file = fopen(name.c_str(), "r")) {
-    fclose(file);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-Shader parseRayTracingShader(const std::string &name, const std::string &path) {
-  Shader shader = {};
-  shader.name = name;
-
-  parseSpirv(&shader, path + ".rgen.spv", "");
-  parseSpirv(&shader, path + ".rchit.spv", "");
-  parseSpirv(&shader, path + ".rmiss.spv", "");
-
-  if (exists(path + ".rint.spv")) {
-    parseSpirv(&shader, path + ".rint.spv", "");
-  }
-
-  sortAndMakeUnqiue(&shader);
+  shader.fileNames = fileNames;
   return shader;
 }

@@ -1,5 +1,6 @@
 #include "parsers.h"
 #include "utils.h"
+#include <cstring>
 
 enum class State { common, vertex, fragment };
 
@@ -64,10 +65,8 @@ void parseRasterization(std::string fileName, std::ifstream fstream) {
   char fragmentSpv[150];
   const auto vulkanSdk = std::getenv("VULKAN_SDK");
   mgAssertDesc(strlen(vulkanSdk) > 0, "VULKAN_SDK is not set\n");
-  snprintf(vertexSpv, sizeof(vertexSpv),
-           "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, vf, vf);
-  snprintf(fragmentSpv, sizeof(fragmentSpv),
-           "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, ff, ff);
+  snprintf(vertexSpv, sizeof(vertexSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, vf, vf);
+  snprintf(fragmentSpv, sizeof(fragmentSpv), "%s/bin/glslangValidator -V %s -o build/%s.spv", vulkanSdk, ff, ff);
 
   printf("%s\n", fileName.c_str());
   auto errorString = getErrorAndWarnings(exec(vertexSpv));

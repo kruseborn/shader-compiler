@@ -1,9 +1,10 @@
 #include "utils.h"
-#include <fstream>
-#include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <memory>
+#include <sstream>
 
-void removeSubstring(std::string& str, const std::string& substr) {
+void removeSubstring(std::string &str, const std::string &substr) {
   std::string::size_type i = str.find(substr);
 
   if (i != std::string::npos)
@@ -32,10 +33,8 @@ uint32_t nrOfLines(std::string in) {
 
 // Try to find a Needle in a Haystack - ignore case
 bool findString(const std::string &inStr, const std::string &pattern) {
-  auto it = std::search(inStr.begin(), inStr.end(), pattern.begin(),
-                        pattern.end(), [](char ch1, char ch2) {
-                          return std::toupper(ch1) == std::toupper(ch2);
-                        });
+  auto it = std::search(inStr.begin(), inStr.end(), pattern.begin(), pattern.end(),
+                        [](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); });
   return (it != inStr.end());
 }
 std::string getErrorAndWarnings(const std::string strOutput) {

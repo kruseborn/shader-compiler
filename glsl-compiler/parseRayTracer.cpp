@@ -1,5 +1,6 @@
 #include "parsers.h"
 #include "utils.h"
+#include <cstring>
 #include <unordered_map>
 
 namespace State {
@@ -20,9 +21,10 @@ static void createSprivFile(std::string fileName, const std::string &shader, Sta
   removeSubstring(fileName, ".ray");
   std::string proc;
   if (type == State::procCHit || type == State::procInt) {
-    proc = ".proc"; 
+    proc = ".proc";
   }
-  snprintf(shaderFileName, sizeof(shaderFileName), "%s%s%s%s", fileName.c_str(), id.c_str(), proc.c_str(), typeToExtension[type].c_str());
+  snprintf(shaderFileName, sizeof(shaderFileName), "%s%s%s%s", fileName.c_str(), id.c_str(), proc.c_str(),
+           typeToExtension[type].c_str());
 
   std::ofstream fileStream(shaderFileName, std::ofstream::out);
 
@@ -90,7 +92,7 @@ void parseRaytracer(std::string fileName, std::ifstream fstream) {
       shadersId[state][shaderIndex[state]] = id;
       continue;
     }
-    
+
     shaders[state][shaderIndex[state]] += line;
     shaders[state][shaderIndex[state]] += "\n";
   }

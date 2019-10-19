@@ -5,7 +5,7 @@
 #include <fstream>
 #include <spirv_glsl.hpp>
 
-template <class A, class B> void insert(A &a, B &b) { a.insert(std::end(a), std::begin(b), std::end(b)); }
+template <class A, class B> void insert(A &a, const B &b) { a.insert(std::end(a), std::begin(b), std::end(b)); }
 
 static std::vector<uint32_t> readBinaryFromDisc(const std::string &fileName) {
   std::ifstream file(fileName, std::ios::binary | std::ios::ate);
@@ -62,7 +62,7 @@ static BufferElement parseElement(const spirv_cross::CompilerGLSL &compiler, con
   const auto &member_type = compiler.get_type(type.member_types[index]);
 
   if (type.basetype == spirv_cross::SPIRType::BaseType::Struct && member_type.member_types.size() > 0) {
-    //size_t array_stride = compiler.type_struct_member_array_stride(type, index);
+    // size_t array_stride = compiler.type_struct_member_array_stride(type, index);
 
     auto structName = compiler.get_member_name(type.self, index);
     assert(!structName.empty());
@@ -314,8 +314,8 @@ Shader parseShader(const std::string &name, const std::string &path, const std::
   shader.name = name;
   const auto fullPath = path + "/";
 
-  for (const auto &fileName: fileNames)
-    parseSpirv(&shader, fullPath, fileName, fileName.find("vert") != std::string::npos? "vert": "");
+  for (const auto &fileName : fileNames)
+    parseSpirv(&shader, fullPath, fileName, fileName.find("vert") != std::string::npos ? "vert" : "");
 
   sortAndMakeUnqiue(&shader);
   shader.fileNames = fileNames;
